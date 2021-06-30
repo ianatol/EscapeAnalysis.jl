@@ -206,7 +206,6 @@ function find_escapes(ir::IRCode, nargs::Int)
 
         for pc in nstmts:-1:1
             stmt = stmts.inst[pc]
-
             # collect escape information
             if isa(stmt, Expr)
                 head = stmt.head
@@ -215,7 +214,7 @@ function find_escapes(ir::IRCode, nargs::Int)
                     # TODO implement more builtins, make them more accurate
                     if ft === Core.IntrinsicFunction # XXX we may break soundness here, e.g. `pointerref`
                         continue
-                    elseif ft === typeof(isa) || ft === typeof(typeof) || ft === typeof(Core.sizeof)
+                    elseif ft === typeof(isa) || ft === typeof(typeof) || ft === typeof(Core.sizeof) || ft === typeof(Base.arraysize) || ft === typeof(Core.:(===))
                         continue
                     elseif ft === typeof(ifelse) && length(stmt.args) === 4
                         f, cond, th, el = stmt.args
@@ -280,6 +279,9 @@ function find_escapes(ir::IRCode, nargs::Int)
                 end
             elseif isa(stmt, PhiNode)
                 info = state.ssavalues[pc]
+                if pc == 58
+                    @show "pc==58" info
+                end
                 values = stmt.values
                 for i in 1:length(values)
                     if isassigned(values, i)
