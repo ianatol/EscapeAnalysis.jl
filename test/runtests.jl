@@ -186,6 +186,22 @@ end
         @test escapes.arguments[2] isa ReturnEscape
     end
 
+    let # eltype
+        src, escapes = analyze_escapes((Vector{Int},)) do itr
+            a = eltype(itr)[]
+
+            for e in itr
+                push!(a, e)
+            end
+
+            sizeof(a)
+        end
+        i = findfirst(==(Base.Vector{Int}), src.stmts.type) # find allocation statement
+        @assert !isnothing(i)
+        @test escapes.ssavalues[i] isa NoEscape
+        @test escapes.arguments[2] isa ReturnEscape
+    end
+
     let # ifelse
         src, escapes = analyze_escapes((Bool,)) do c
             r = ifelse(c, Ref("yes"), Ref("no"))
